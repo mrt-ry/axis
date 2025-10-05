@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: axis-postgres
+    environment:
+      POSTGRES_DB: axis_db
+      POSTGRES_USER: axis_user
+      POSTGRES_PASSWORD: axis_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - axis-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: axis-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://axis_user:axis_password@postgres:5432/axis_db
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - axis-network
+    command: npm run start:dev
+
+volumes:
+  postgres_data:
+
+networks:
+  axis-network:
+    driver: bridge
